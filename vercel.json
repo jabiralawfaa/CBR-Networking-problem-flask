@@ -1,9 +1,8 @@
 {
-  "name": "cbr-networking-problem-flask",
   "builds": [
     {
-      "src": "app.py",
-      "use": "@vercel/python-server"
+      "src": "Dockerfile",
+      "use": "@vercel/docker"
     }
   ]
 }
