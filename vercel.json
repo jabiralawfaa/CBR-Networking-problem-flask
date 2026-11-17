@@ -1,4 +1,5 @@
 {
+  "name": "cbr-networking-problem-flask",
   "builds": [
     {
       "src": "app.py",
