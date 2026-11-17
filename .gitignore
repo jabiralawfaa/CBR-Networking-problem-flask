@@ -4,3 +4,5 @@ venv/
 .env
 instance/
 *.sqlite3
+.vercel/
+node_modules/
