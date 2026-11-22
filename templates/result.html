@@ -17,7 +17,7 @@
 
 {# Meta info #}
 <div class="meta">
-  <div><span>Posisi server</span><b>-</b></div>
+  <div><span>Posisi server</span><b>{{ posisi|default("—") }}</b></div>
   <div><span>Gejala dipilih</span><b>{{ sel_gejala|length }}</b></div>
   <div><span>Waktu diagnosa</span><b>{{ now|default("") }}</b></div>
 </div>
@@ -116,6 +116,53 @@
   });
   const el=document.getElementById('radar');
   if(el) el.innerHTML=s;
+})();
+</script>
+
+<script src="/static/history.js"></script>
+<script>
+// Save diagnosis to IndexedDB history
+(function(){
+  const HASIL = {{ hasil|tojson }};
+  const KASUS_BARU = {{ kasus_baru|tojson }};
+  const GEJALA = {{ gejala|tojson }};
+  const NOW = {{ now|tojson }};
+  const POSISI = {{ posisi|tojson }};
+
+  // Build gejala terpilih array
+  const gejalaTerpilih = [];
+  for (let i = 0; i < GEJALA.length; i++) {
+    if (KASUS_BARU[i] === 1) gejalaTerpilih.push(GEJALA[i]);
+  }
+
+  const top = HASIL[0] || {};
+  const record = {
+    kode: top.kode || "",
+    diagnosis: top.diagnosis || "",
+    skor: top.skor || 0,
+    gejala: gejalaTerpilih,
+    posisi: POSISI || "",
+    timestamp: Date.now(),
+    now: NOW
+  };
+
+  // Save to history
+  if (window.HistoryDB) {
+    HistoryDB.init().then(() => {
+      return HistoryDB.save(record);
+    }).then((id) => {
+      // Show toast/banner
+      const toast = document.createElement('div');
+      toast.className = 'banner';
+      toast.style.marginBottom = '14px';
+      toast.textContent = 'Tersimpan ke riwayat (ID: ' + id + ')';
+      const content = document.querySelector('.main') || document.body;
+      content.insertBefore(toast, content.firstChild);
+      setTimeout(() => toast.remove(), 3000);
+    }).catch((e) => {
+      console.warn('History save failed:', e);
+    });
+  }
 })();
 </script>
 <script src="/static/cyber-bg.js" data-opacity=".28"></script>

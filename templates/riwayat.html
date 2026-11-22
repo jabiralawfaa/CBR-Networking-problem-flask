@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Riwayat diagnosa – BTS Diagnosa{% endblock %}
+
+{% block content %}
+<div class="crumb"><a href="/">Beranda</a> / Riwayat</div>
+<h1>Riwayat diagnosa</h1>
+
+<div id="toast" class="banner" hidden></div>
+
+<section class="panel" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+  <h2 style="margin:0">Daftar riwayat</h2>
+  <button class="btn ghost" id="clearAll" style="width:auto">Hapus semua</button>
+</section>
+
+<section class="panel" id="historyPanel">
+  <div id="emptyState" class="empty" hidden>
+    <h2>Belum ada riwayat diagnosa</h2>
+    <p class="muted">Lakukan diagnosa pertama Anda untuk melihat riwayat di sini.</p>
+    <a class="btn" href="/diagnosa" style="margin-top:14px">Mulai diagnosa</a>
+  </div>
+
+  <table id="historyTable" hidden>
+    <thead>
+      <tr>
+        <th style="width:180px">Waktu</th>
+        <th>Posisi</th>
+        <th>Diagnosis teratas</th>
+        <th style="width:100px">Jml gejala</th>
+        <th style="width:140px">Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="historyBody"></tbody>
+  </table>
+</section>
+
+<!-- Detail modal (as expanding row) -->
+<template id="detailTemplate">
+  <tr class="detail-row" hidden>
+    <td colspan="5">
+      <div class="panel" style="margin:0;padding:16px 18px;background:rgba(255,255,255,.02)">
+        <div class="g2" style="margin-bottom:12px">
+          <div>
+            <h3 style="margin:0 0 8px;display:flex;align-items:center;gap:10px">
+              <span class="kode" id="detKode"></span>
+              <span id="detDiagnosis"></span>
+            </h3>
+            <p class="muted" id="detMeta"></p>
+            <div class="big" id="detSkor" style="font-size:36px;margin:8px 0"></div>
+          </div>
+          <div>
+            <h4 style="margin:0 0 8px">Gejala terpilih</h4>
+            <div class="chips" id="detGejala"></div>
+          </div>
+        </div>
+
+        <h4 style="margin:14px 0 8px">Peringkat diagnosis</h4>
+        <div id="detHasil"></div>
+      </div>
+    </td>
+  </tr>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/history.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const tbody = $("historyBody");
+  const emptyState = $("emptyState");
+  const historyTable = $("historyTable");
+  const toast = $("toast");
+  const detailTpl = document.getElementById("detailTemplate").content.querySelector(".detail-row");
+
+  function showToast(msg, isError = false) {
+    toast.textContent = msg;
+    toast.hidden = false;
+    if (isError) {
+      toast.style.background = "rgba(220,63,12,.12)";
+      toast.style.borderColor = "rgba(220,63,12,.35)";
+      toast.style.color = "var(--or2)";
+    } else {
+      toast.style.background = "rgba(233,178,59,.12)";
+      toast.style.borderColor = "rgba(233,178,59,.3)";
+      toast.style.color = "var(--am)";
+    }
+    setTimeout(() => (toast.hidden = true), 3000);
+  }
+
+  function formatTimestamp(ts) {
+    const d = new Date(ts);
+    return d.toLocaleString("id-ID", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function renderChips(gejalaArray) {
+    if (!gejalaArray || !gejalaArray.length) return '<span class="muted">—</span>';
+    return gejalaArray.map((g) => `<span class="chip on">${g}</span>`).join("");
+  }
+
+  function renderHasil(hasil, userGejala) {
+    if (!hasil || !hasil.length) return '<p class="muted">Tidak ada data peringkat</p>';
+    const userSet = new Set(userGejala || []);
+    return `
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--line)">
+            <th style="text-align:left;padding:6px 8px;width:40px;color:var(--mu)">#</th>
+            <th style="text-align:left;padding:6px 8px;width:70px;color:var(--mu)">Kode</th>
+            <th style="text-align:left;padding:6px 8px;color:var(--mu)">Diagnosis</th>
+            <th style="text-align:left;padding:6px 8px;width:120px;color:var(--mu)">Skor</th>
+            <th style="text-align:left;padding:6px 8px;color:var(--mu)">Gejala cocok</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${hasil
+            .map(
+              (r) => {
+                const cocok = (r.gejala || []).filter(g => userSet.has(g));
+                const tidak = (r.gejala || []).filter(g => !userSet.has(g));
+                return `
+            <tr style="border-bottom:1px solid var(--line)">
+              <td style="padding:8px;color:var(--mu)">${r.peringkat}</td>
+              <td style="padding:8px"><span class="kode">${r.kode}</span></td>
+              <td style="padding:8px">${r.diagnosis}</td>
+              <td style="padding:8px">
+                <div class="bar" style="width:100%;max-width:100px"><i style="width:${r.skor}%"></i></div>
+                <span class="sc" style="font-size:12px">${r.skor.toFixed(1)}%</span>
+              </td>
+              <td style="padding:8px">${renderChips(cocok)}</td>
+            </tr>
+          `;
+              }
+            )
+            .join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function createRow(record) {
+    const tr = document.createElement("tr");
+    const top = record.hasil?.[0] || {};
+    const gejalaCount = record.gejala?.length || 0;
+    const posisi = record.posisi || "—";
+
+    tr.innerHTML = `
+      <td>${formatTimestamp(record.timestamp)}</td>
+      <td>${posisi}</td>
+      <td>
+        ${top.kode ? `<span class="kode">${top.kode}</span> ${top.diagnosis}` : "—"}
+        ${top.skor ? `<span class="sc" style="margin-left:8px">${top.skor.toFixed(1)}%</span>` : ""}
+      </td>
+      <td>${gejalaCount}</td>
+      <td>
+        <button class="btn ghost view-btn" data-id="${record.id}" style="padding:6px 12px;font-size:12px">Lihat</button>
+        <button class="btn ghost delete-btn" data-id="${record.id}" style="padding:6px 12px;font-size:12px;margin-left:6px;color:var(--or2)">Hapus</button>
+      </td>
+    `;
+    return tr;
+  }
+
+  function createDetailRow(record) {
+    const tr = detailTpl.cloneNode(true);
+    const top = record.hasil?.[0] || {};
+
+    tr.querySelector("#detKode").textContent = top.kode || "";
+    tr.querySelector("#detDiagnosis").textContent = top.diagnosis || "";
+    tr.querySelector("#detSkor").textContent = top.skor ? `${top.skor.toFixed(1)}%` : "—";
+    tr.querySelector("#detMeta").textContent = `Waktu: ${formatTimestamp(record.timestamp)} · Posisi: ${record.posisi || "—"}`;
+    tr.querySelector("#detGejala").innerHTML = renderChips(record.gejala || []);
+    tr.querySelector("#detHasil").innerHTML = renderHasil(record.hasil || [], record.gejala || []);
+
+    // View button toggles detail row
+    const viewBtn = tr.querySelector(".view-btn");
+    const deleteBtn = tr.querySelector(".delete-btn");
+
+    return tr;
+  }
+
+  async function loadHistory() {
+    try {
+      const records = await HistoryDB.getAll();
+      tbody.innerHTML = "";
+
+      if (!records.length) {
+        emptyState.hidden = false;
+        historyTable.hidden = true;
+        return;
+      }
+
+      emptyState.hidden = true;
+      historyTable.hidden = false;
+
+      records.forEach((record) => {
+        const row = createRow(record);
+        tbody.appendChild(row);
+
+        // Add click handlers for view/delete
+        row.querySelector(".view-btn").addEventListener("click", () => toggleDetail(record));
+        row.querySelector(".delete-btn").addEventListener("click", () => deleteRecord(record.id, row));
+      });
+    } catch (e) {
+      console.error("Failed to load history:", e);
+      showToast("Gagal memuat riwayat", true);
+    }
+  }
+
+  let currentDetailRow = null;
+  let currentRecordId = null;
+
+  function toggleDetail(record) {
+    // If clicking the same record, close it
+    if (currentRecordId === record.id && currentDetailRow && !currentDetailRow.hidden) {
+      currentDetailRow.hidden = true;
+      currentRecordId = null;
+      return;
+    }
+
+    // Close existing detail row
+    if (currentDetailRow) {
+      currentDetailRow.hidden = true;
+    }
+
+    // Find or create detail row
+    const mainRow = tbody.querySelector(`tr:not(.detail-row) button[data-id="${record.id}"]`).closest("tr");
+    let detailRow = mainRow.nextElementSibling;
+
+    if (!detailRow || !detailRow.classList.contains("detail-row")) {
+      detailRow = createDetailRow(record);
+      mainRow.after(detailRow);
+    } else {
+      // Update content
+      const top = record.hasil?.[0] || {};
+      detailRow.querySelector("#detKode").textContent = top.kode || "";
+      detailRow.querySelector("#detDiagnosis").textContent = top.diagnosis || "";
+      detailRow.querySelector("#detSkor").textContent = top.skor ? `${top.skor.toFixed(1)}%` : "—";
+      detailRow.querySelector("#detMeta").textContent = `Waktu: ${formatTimestamp(record.timestamp)} · Posisi: ${record.posisi || "—"}`;
+      detailRow.querySelector("#detGejala").innerHTML = renderChips(record.gejala || []);
+      detailRow.querySelector("#detHasil").innerHTML = renderHasil(record.hasil || [], record.gejala || []);
+    }
+
+    detailRow.hidden = false;
+    currentDetailRow = detailRow;
+    currentRecordId = record.id;
+  }
+
+  async function deleteRecord(id, mainRow) {
+    if (!confirm("Hapus riwayat ini?")) return;
+    try {
+      await HistoryDB.delete(id);
+      // Remove detail row if open
+      const detailRow = mainRow.nextElementSibling;
+      if (detailRow && detailRow.classList.contains("detail-row")) {
+        detailRow.remove();
+      }
+      mainRow.remove();
+      showToast("Riwayat dihapus");
+      // Check if table is now empty
+      if (tbody.children.length === 0) {
+        emptyState.hidden = false;
+        historyTable.hidden = true;
+      }
+    } catch (e) {
+      console.error("Delete failed:", e);
+      showToast("Gagal menghapus", true);
+    }
+  }
+
+  $("clearAll").addEventListener("click", async () => {
+    if (!confirm("Hapus semua riwayat? Tindakan ini tidak bisa dibatalkan.")) return;
+    try {
+      await HistoryDB.clear();
+      tbody.innerHTML = "";
+      emptyState.hidden = false;
+      historyTable.hidden = true;
+      showToast("Semua riwayat dihapus");
+    } catch (e) {
+      console.error("Clear failed:", e);
+      showToast("Gagal menghapus semua", true);
+    }
+  });
+
+  // Initialize
+  HistoryDB.init().then(loadHistory).catch((e) => {
+    console.error("DB init failed:", e);
+    showToast("IndexedDB tidak tersedia", true);
+  });
+})();
+</script>
+<script src="/static/cyber-bg.js" data-opacity=".28"></script>
+{% endblock %}

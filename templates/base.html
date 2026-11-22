@@ -16,6 +16,7 @@
       <nav class="nav">
         <a href="/" class="{% if request.path == '/' %}on{% endif %}">Beranda</a>
         <a href="/diagnosa" class="{% if request.path == '/diagnosa' %}on{% endif %}">Diagnosa</a>
+        <a href="/riwayat" class="{% if request.path == '/riwayat' %}on{% endif %}">Riwayat</a>
         <a href="/kelola" class="{% if request.path == '/kelola' %}on{% endif %}">Kelola data</a>
       </nav>
       <small>Metode: cosine similarity<br>{{ gejala_count }} gejala, {{ diagnosis_count }} diagnosis</small>

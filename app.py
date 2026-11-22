@@ -46,7 +46,8 @@ def diagnosa():
 
     hasil = dapatkan_rekomendasi(kasus_baru)
     now = datetime.now().strftime("%d/%m/%Y, %H.%M")
-    return render_template("result.html", hasil=hasil, kasus_baru=kasus_baru, gejala=gejala, now=now)
+    posisi = request.form.get("pos", "").strip()
+    return render_template("result.html", hasil=hasil, kasus_baru=kasus_baru, gejala=gejala, now=now, posisi=posisi)
 
 
 @app.route("/api/gejala")
@@ -84,6 +85,11 @@ def kelola():
         msg=msg,
         ok=ok,
     )
+
+
+@app.route("/riwayat")
+def riwayat():
+    return render_template("riwayat.html")
 
 
 @app.route("/kelola/gejala", methods=["POST"])
