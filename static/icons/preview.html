@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Icon Options - BTS Diagnosa</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #0d0908; color: #e8dfd8; padding: 2rem; margin: 0; }
+    h1 { text-align: center; margin-bottom: 2rem; color: #ff6a35; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; max-width: 1000px; margin: 0 auto; }
+    .card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 1.5rem; text-align: center; transition: transform .2s, box-shadow .2s; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(220,63,12,.15); border-color: rgba(220,63,12,.3); }
+    .icon-preview { width: 128px; height: 128px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; background: #0d0908; border-radius: 12px; border: 1px solid rgba(255,255,255,.06); }
+    .icon-preview img, .icon-preview svg { width: 96px; height: 96px; }
+    h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+    p { margin: 0; color: #a0958d; font-size: 0.85rem; }
+    .badge { display: inline-block; background: rgba(220,63,12,.15); color: #ff6a35; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Pilih Icon untuk BTS Diagnosa</h1>
+  <div class="grid">
+    <div class="card">
+      <div class="icon-preview"><img src="icon-option-1-bts-tower.svg" alt="BTS Tower"></div>
+      <h3>Opsi 1: BTS Tower</h3>
+      <p>Menara BTS dengan antena & gelombang sinyal</p>
+      <span class="badge">literal</span>
+    </div>
+    <div class="card">
+      <div class="icon-preview"><img src="icon-option-2-hex-wave.svg" alt="Hex Wave"></div>
+      <h3>Opsi 2: Hexagon + Wave</h3>
+      <p>Sel heksagonal + gelombang cosine similarity</p>
+      <span class="badge">konseptual</span>
+    </div>
+    <div class="card">
+      <div class="icon-preview"><img src="icon-option-3-radar.svg" alt="Radar"></div>
+      <h3>Opsi 3: Radar Scope</h3>
+      <p>Radar diagnostik dengan arc similarity & target</p>
+      <span class="badge">teknis</span>
+    </div>
+    <div class="card">
+      <div class="icon-preview"><img src="icon-option-4-bt-monogram.svg" alt="BT Monogram"></div>
+      <h3>Opsi 4: BT Monogram</h3>
+      <p>Inisial B+T bergaya + signal bars</p>
+      <span class="badge">branding</span>
+    </div>
+    <div class="card">
+      <div class="icon-preview"><img src="icon-option-5-cbr-overlap.svg" alt="CBR Overlap"></div>
+      <h3>Opsi 5: CBR Overlap</h3>
+      <p>Dua kasus tumpang tindih = cosine similarity</p>
+      <span class="badge">algoritma</span>
+    </div>
+  </div>
+  <p style="text-align:center; margin-top:2rem; color:#7a706a; font-size:.85rem">
+    File SVG ada di <code>static/icons/</code>. Pilih satu, rename jadi <code>favicon.svg</code> di <code>static/</code>, lalu tambahkan di <code>base.html</code>:
+    <br><code><link rel="icon" href="/static/favicon.svg"></code>
+  </p>
+</body>
+</html>
