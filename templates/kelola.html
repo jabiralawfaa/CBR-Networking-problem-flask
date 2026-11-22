@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Kelola data – BTS Diagnosa{% endblock %}
+
+{% block content %}
+<div class="crumb"><a href="/">Beranda</a> / Kelola data</div>
+<h1>Kelola data</h1>
+<p class="lead">Tambah gejala atau diagnosis baru ke basis kasus.</p>
+
+{% if msg %}
+<div class="banner" style="{% if not ok %}background:rgba(220,63,12,.12);border-color:rgba(220,63,12,.35);color:var(--or2){% endif %}">{{ msg }}</div>
+{% endif %}
+
+<div class="stack" style="display:grid;gap:18px;">
+
+  <section class="panel">
+    <h2>Tambah gejala</h2>
+    <form class="gform" method="POST" action="/kelola/gejala" style="grid-template-columns:1fr">
+      <label class="f">
+        Nama gejala baru
+        <input type="text" name="nama" placeholder="Contoh: sinyal_telepon_mati" autocomplete="off" required>
+      </label>
+      <button class="btn full" type="submit">Simpan gejala</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Tambah diagnosis</h2>
+    <form class="gform" method="POST" action="/kelola/diagnosis">
+      <div class="stack">
+        <label class="f">
+          Nama diagnosis
+          <input type="text" name="nama" placeholder="Contoh: High temperature" autocomplete="off" required>
+        </label>
+
+        <div>
+          <div class="tools">
+            <input type="search" id="q" placeholder="Cari gejala" aria-label="Cari gejala">
+            <button type="button" class="btn ghost" id="clr">Hapus pilihan</button>
+          </div>
+          <div class="syms" id="list">
+            {% for g in gejala %}
+            <label class="sym">
+              <input type="checkbox" name="gejala" value="{{ g }}">
+              <span>{{ g }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <p class="muted" id="none" hidden style="margin-top:10px">Tidak ada gejala yang cocok dengan pencarian.</p>
+        </div>
+
+        <label class="f">
+          Gejala baru (dipisah koma)
+          <input type="text" id="baru" name="gejala_baru" placeholder="gejala baru dipisah koma" autocomplete="off">
+        </label>
+      </div>
+      <aside class="panel sticky" style="align-self:start">
+        <h2>Ringkasan</h2>
+        <p class="muted">Gejala terpilih: <b id="cnt" style="color:var(--tx)">0</b></p>
+        <div class="chips" id="chips" style="margin-bottom:18px"></div>
+        <button class="btn full" id="go" disabled>Simpan diagnosis</button>
+        <p class="muted" id="hint" style="margin-top:10px;font-size:12px">Pilih minimal satu gejala.</p>
+      </aside>
+    </form>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const $=id=>document.getElementById(id),boxes=()=>[...document.querySelectorAll('#list input')];
+function upd(){
+  const c=boxes().filter(b=>b.checked);
+  $('cnt').textContent=c.length;
+  $('chips').innerHTML=c.map(b=>`<span class="chip on">${b.value}</span>`).join('');
+  const ok=c.length||$('baru').value.trim();
+  $('go').disabled=!ok;
+  $('hint').hidden=!!ok
+}
+boxes().forEach(b=>b.addEventListener('change',upd));
+$('baru').oninput=upd;
+$('clr').onclick=()=>{boxes().forEach(b=>b.checked=false);upd()};
+$('q').oninput=e=>{
+  const t=e.target.value.toLowerCase();
+  let n=0;
+  boxes().forEach(b=>{
+    const s=b.value.toLowerCase().includes(t);
+    b.parentElement.hidden=!s;
+    n+=s
+  });
+  $('none').hidden=n>0
+};
+</script>
+{% endblock %}

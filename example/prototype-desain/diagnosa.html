@@ -1,0 +1,44 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Diagnosa – BTS Diagnosa</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body><div class="app">
+<aside class="side"><div class="brand">BTS · DIAGNOSA</div><a class="btn full" href="diagnosa.html">Diagnosa baru</a><nav class="nav"><a href="welcome.html">Beranda</a><a href="diagnosa.html" class="on">Diagnosa</a><a href="hasil.html">Hasil diagnosa</a></nav><small>Metode: cosine similarity<br>24 gejala, 9 diagnosis</small></aside>
+<main class="main">
+<div class="crumb"><a href="welcome.html">Beranda</a> / Diagnosa</div>
+<h1>Diagnosa baru</h1>
+<p class="lead">Isi posisi server sebagai keterangan, lalu centang gejala yang terlihat.</p>
+<form id="f" class="gform">
+<div class="stack">
+<section class="panel"><h2>Posisi server</h2>
+<label class="f">Lokasi atau nama server (opsional, hanya sebagai keterangan)<input type="text" id="pos" placeholder="Contoh: Site BYW-0142 atau Hub Genteng" autocomplete="off"></label>
+</section>
+<section class="panel"><h2>Gejala</h2>
+<div class="tools"><input type="search" id="q" placeholder="Cari gejala" aria-label="Cari gejala"><button type="button" class="btn ghost" id="clr">Hapus pilihan</button></div>
+<div class="syms" id="list"></div>
+<p class="muted" id="none" hidden style="margin-top:10px">Tidak ada gejala yang cocok dengan pencarian.</p>
+</section>
+</div>
+<aside class="panel sticky"><h2>Ringkasan kasus</h2>
+<p class="muted">Posisi</p><p id="sp" style="margin-bottom:12px">Belum diisi</p>
+<p class="muted" style="margin-bottom:6px">Gejala dipilih: <b id="cnt" style="color:var(--tx)">0</b></p>
+<div class="chips" id="chips" style="margin-bottom:18px"></div>
+<button class="btn full" id="go" disabled>Diagnosa sekarang</button>
+<p class="muted" id="hint" style="margin-top:10px;font-size:12px">Pilih minimal satu gejala.</p>
+</aside>
+</form>
+</main></div>
+<script src="data.js"></script>
+<script>
+const $=id=>document.getElementById(id),boxes=()=>[...document.querySelectorAll('#list input')];
+$('list').innerHTML=GEJALA.map((g,i)=>`<label class="sym"><input type="checkbox" value="${i}"><span>${g}</span></label>`).join('');
+function upd(){const c=boxes().filter(b=>b.checked);$('cnt').textContent=c.length;
+ $('chips').innerHTML=c.map(b=>`<span class="chip">${GEJALA[b.value]}</span>`).join('');
+ $('sp').textContent=$('pos').value.trim()||'Belum diisi';
+ const ok=c.length;$('go').disabled=!ok;$('hint').hidden=!!ok}
+$('list').onchange=upd;$('pos').oninput=upd;
+$('clr').onclick=()=>{boxes().forEach(b=>b.checked=false);upd()};
+$('q').oninput=e=>{const t=e.target.value.toLowerCase();let n=0;boxes().forEach(b=>{const s=GEJALA[b.value].toLowerCase().includes(t);b.parentElement.hidden=!s;n+=s});$('none').hidden=n>0};
+$('f').onsubmit=e=>{e.preventDefault();
+ // Prototype: kasus disimpan di sessionStorage. Di Flask, kirim sebagai POST ke route hasil.
+ sessionStorage.setItem('kasus',JSON.stringify({posisi:$('pos').value.trim(),gejala:boxes().filter(b=>b.checked).map(b=>+b.value)}));
+ location.href='hasil.html'};
+</script>
+<script src="cyber-bg.js" data-opacity=".4"></script>
+</body></html>

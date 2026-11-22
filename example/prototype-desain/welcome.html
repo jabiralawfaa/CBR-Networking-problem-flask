@@ -1,0 +1,32 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Beranda – BTS Diagnosa</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body><div class="app">
+<aside class="side"><div class="brand">BTS · DIAGNOSA</div><a class="btn full" href="diagnosa.html">Diagnosa baru</a><nav class="nav"><a href="welcome.html" class="on">Beranda</a><a href="diagnosa.html">Diagnosa</a><a href="hasil.html">Hasil diagnosa</a></nav><small>Metode: cosine similarity<br>24 gejala, 9 diagnosis</small></aside>
+<main class="main">
+<div class="crumb">Beranda</div>
+<h1>Diagnosa gangguan BTS</h1>
+<p class="lead">Pilih posisi server dan gejala yang terlihat di lapangan. Sistem mencocokkan kasus Anda dengan pola gangguan yang sudah tersimpan, lalu mengurutkannya dari yang paling mirip.</p>
+<section class="panel dev" aria-label="Pembuat aplikasi">
+<div class="dev3d" id="prog3d" role="img" aria-label="Ilustrasi 3D programmer berjaket hitam berlogo EKRAF dan berkacamata minimalis, melambaikan tangan"></div>
+<div class="devtxt"><span class="tag">dibuat oleh :</span><h2>Rusydi Jabir Al awfa</h2>
+<ul class="idl"><li><span>NIM</span><b>362458302044</b></li><li><span>Kelas</span><b>TRPL3D</b></li></ul>
+<dl class="info"><div><dt>Judul web</dt><dd>BTS Diagnosa</dd></div>
+<div><dt>Referensi artikel</dt><dd>CASE BASED REASONING GUNA TROUBLESHOOTING PADA BASE TRANSCEIVER STATION MENGGUNAKAN METODE COSINE SIMILARITY</dd></div></dl></div></section>
+<section class="panel globe"><canvas id="globe" role="img" aria-label="Peta globe Indonesia dengan titik BTS aktif, nonaktif, dan gangguan"></canvas>
+<div class="gtxt"><h2>Sebaran BTS di Indonesia</h2><p class="muted">Data contoh untuk prototype.</p>
+<ul class="legend"><li><i style="background:#ff4a1c;box-shadow:0 0 8px #ff4a1c"></i>BTS aktif</li><li><i style="background:#7a706a"></i>BTS nonaktif</li><li><i style="background:#ffe14d;box-shadow:0 0 8px #ffe14d"></i>Gangguan (berkedip)</li></ul></div></section>
+<div class="g2">
+<section class="hero"><div><h2>Ada gangguan di BTS?</h2><p>Centang gejala yang muncul, dapatkan peringkat diagnosis dalam hitungan detik.</p></div><a class="btn" href="diagnosa.html">Mulai diagnosa</a></section>
+<section class="panel"><h2>Alur diagnosa</h2><ol class="steps">
+<li><i>1</i><div><b>Pilih posisi server</b><p>Tentukan di mana gangguan terjadi.</p></div></li>
+<li><i>2</i><div><b>Centang gejala</b><p>Pilih semua gejala yang teramati.</p></div></li>
+<li><i>3</i><div><b>Baca hasilnya</b><p>Lihat diagnosis dengan kemiripan tertinggi.</p></div></li>
+</ol></section>
+</div>
+<section class="panel"><h2>Gangguan yang dikenali</h2>
+<table><thead><tr><th>Kode</th><th>Gangguan</th><th>Gejala dalam pola</th></tr></thead><tbody id="tb"></tbody></table></section>
+</main></div>
+<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script src="programmer3d.js"></script>
+<script src="globe.js"></script>
+<script>document.getElementById('tb').innerHTML=DIAGNOSIS.map(d=>`<tr><td><span class="kode">${d.kode}</span></td><td>${d.nama}</td><td class="muted">${d.idx.length} gejala</td></tr>`).join('')</script>
+</body></html>

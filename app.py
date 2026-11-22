@@ -1,17 +1,38 @@
 """
 Flask App untuk CBR Diagnosis BTS
 """
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
+from datetime import datetime
+from urllib.parse import quote
 
-from cbr import get_gejala_list, get_diagnosis_list, dapatkan_rekomendasi
+from cbr import get_gejala_list, get_diagnosis_list, dapatkan_rekomendasi, tambah_gejala, tambah_diagnosis
 
 app = Flask(__name__)
 
 
+@app.context_processor
+def inject_counts():
+    return {
+        "gejala_count": len(get_gejala_list()),
+        "diagnosis_count": len(get_diagnosis_list()),
+    }
+
+
 @app.route("/")
-def index():
+def welcome():
+    diagnosis_list = get_diagnosis_list()
+    # Get gejala count for each diagnosis
+    from data import DATA_DIAGNOSIS, DATA_GEJALA
+    for d in diagnosis_list:
+        idx = int(d["kode"][1:]) - 1
+        d["gejala"] = [DATA_GEJALA[i] for i, v in enumerate(DATA_DIAGNOSIS[idx]) if v == 1]
+    return render_template("welcome.html", diagnosis_list=diagnosis_list)
+
+
+@app.route("/diagnosa")
+def diagnosa_form():
     gejala = get_gejala_list()
-    return render_template("index.html", gejala=gejala)
+    return render_template("diagnosa.html", gejala=gejala)
 
 
 @app.route("/diagnosa", methods=["POST"])
@@ -24,7 +45,8 @@ def diagnosa():
         kasus_baru.append(1 if val == "on" else 0)
 
     hasil = dapatkan_rekomendasi(kasus_baru)
-    return render_template("result.html", hasil=hasil, kasus_baru=kasus_baru, gejala=gejala)
+    now = datetime.now().strftime("%d/%m/%Y, %H.%M")
+    return render_template("result.html", hasil=hasil, kasus_baru=kasus_baru, gejala=gejala, now=now)
 
 
 @app.route("/api/gejala")
@@ -44,11 +66,48 @@ def api_diagnosa():
         return jsonify({"error": "Field 'gejala' required"}), 400
 
     kasus_baru = data["gejala"]
-    if len(kasus_baru) != 24:
-        return jsonify({"error": "Gejala harus 24 item"}), 400
+    if len(kasus_baru) != len(get_gejala_list()):
+        return jsonify({"error": f"Gejala harus {len(get_gejala_list())} item"}), 400
 
     hasil = dapatkan_rekomendasi(kasus_baru)
     return jsonify(hasil)
+
+
+@app.route("/kelola")
+def kelola():
+    msg = request.args.get("msg", "")
+    ok = request.args.get("ok", "true") == "true"
+    return render_template(
+        "kelola.html",
+        gejala=get_gejala_list(),
+        diagnosis_list=get_diagnosis_list(),
+        msg=msg,
+        ok=ok,
+    )
+
+
+@app.route("/kelola/gejala", methods=["POST"])
+def kelola_gejala():
+    nama = request.form.get("nama", "")
+    ok, message = tambah_gejala(nama)
+    return redirect(f"/kelola?msg={quote(message)}&ok={'true' if ok else 'false'}")
+
+
+@app.route("/kelola/diagnosis", methods=["POST"])
+def kelola_diagnosis():
+    nama = request.form.get("nama", "")
+    gejala_terpili = request.form.getlist("gejala")
+    gejala_baru_raw = request.form.get("gejala_baru", "")
+
+    daftar_gejala = list(gejala_terpili)
+    if gejala_baru_raw.strip():
+        for g in gejala_baru_raw.split(","):
+            g = g.strip()
+            if g:
+                daftar_gejala.append(g)
+
+    ok, message = tambah_diagnosis(nama, daftar_gejala)
+    return redirect(f"/kelola?msg={quote(message)}&ok={'true' if ok else 'false'}")
 
 
 if __name__ == "__main__":
