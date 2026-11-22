@@ -1,8 +1,20 @@
 """
 CBR Core Functions: Cosine Similarity & Recommendation Engine
+Uses persistent data_store for serverless compatibility.
 """
 
-from data import DATA_GEJALA, NAMA_DIAGNOSIS, DATA_DIAGNOSIS
+from data_store import (
+    get_DATA_GEJALA,
+    get_NAMA_DIAGNOSIS,
+    get_DATA_DIAGNOSIS,
+    tambah_gejala,
+    tambah_diagnosis,
+)
+
+# Aliases for backward compatibility
+DATA_GEJALA = get_DATA_GEJALA()
+NAMA_DIAGNOSIS = get_NAMA_DIAGNOSIS()
+DATA_DIAGNOSIS = get_DATA_DIAGNOSIS()
 
 
 def hitung_cosine_similarity(vector_a: list, vector_b: list) -> float:
@@ -35,6 +47,11 @@ def dapatkan_rekomendasi(kasus_baru: list) -> list:
         ...
     ]
     """
+    # Always get fresh data from store
+    DATA_DIAGNOSIS = get_DATA_DIAGNOSIS()
+    DATA_GEJALA = get_DATA_GEJALA()
+    NAMA_DIAGNOSIS = get_NAMA_DIAGNOSIS()
+
     hasil_perhitungan = []
 
     for i in range(len(DATA_DIAGNOSIS)):
@@ -63,76 +80,14 @@ def dapatkan_rekomendasi(kasus_baru: list) -> list:
     return hasil_perhitungan
 
 
-def tambah_gejala(nama_gejala_baru: str) -> tuple:
-    """ tambah_gejala(nama_gejala_baru) -> (ok, message)
-
-    Tambah satu gejala baru ke basis kasus.
-    Semua kasus diagnosis lama otomatis diberi nilai 0 untuk gejala ini,
-    supaya panjang vektor tetap sama dengan jumlah gejala.
-    """
-    nama_gejala_baru = nama_gejala_baru.strip().lower().replace(" ", "_")
-
-    if nama_gejala_baru == "":
-        return False, "Gagal: nama gejala tidak boleh kosong."
-
-    if nama_gejala_baru in DATA_GEJALA:
-        idx = DATA_GEJALA.index(nama_gejala_baru)
-        return False, f"Gagal: gejala '{nama_gejala_baru}' sudah ada (indeks {idx})."
-
-    DATA_GEJALA.append(nama_gejala_baru)
-    for baris in DATA_DIAGNOSIS:
-        baris.append(0)
-
-    return True, f"Berhasil: gejala '{nama_gejala_baru}' ditambahkan (indeks {len(DATA_GEJALA) - 1})."
-
-
-def tambah_diagnosis(nama_baru: str, daftar_gejala: list) -> tuple:
-    """ tambah_diagnosis(nama_baru, daftar_gejala) -> (ok, message)
-
-    Tambah satu diagnosis (penyakit) baru beserta gejalanya.
-    daftar_gejala berisi nama gejala. Gejala yang belum ada di DATA_GEJALA
-    otomatis didaftarkan lebih dulu lewat tambah_gejala().
-    """
-    nama_baru = nama_baru.strip()
-
-    if nama_baru == "":
-        return False, "Gagal: nama diagnosis tidak boleh kosong."
-
-    for nama in NAMA_DIAGNOSIS:
-        if nama.lower() == nama_baru.lower():
-            return False, f"Gagal: diagnosis '{nama_baru}' sudah ada."
-
-    if len(daftar_gejala) == 0:
-        return False, "Gagal: diagnosis harus punya minimal satu gejala."
-
-    # daftarkan gejala yang belum ada
-    gejala_bersih = []
-    for g in daftar_gejala:
-        g = g.strip().lower().replace(" ", "_")
-        if g not in DATA_GEJALA:
-            tambah_gejala(g)
-        if g not in gejala_bersih:
-            gejala_bersih += [g]
-
-    # buat deret biner untuk diagnosis baru
-    deret_biner = [0] * len(DATA_GEJALA)
-    for g in gejala_bersih:
-        deret_biner[DATA_GEJALA.index(g)] = 1
-
-    NAMA_DIAGNOSIS.append(nama_baru)
-    DATA_DIAGNOSIS.append(deret_biner)
-
-    return True, f"Berhasil: diagnosis D{len(NAMA_DIAGNOSIS)} | {nama_baru} ditambahkan dengan {len(gejala_bersih)} gejala."
-
-
 def get_gejala_list() -> list:
     """Return list of all gejala for UI."""
-    return DATA_GEJALA
+    return get_DATA_GEJALA()
 
 
 def get_diagnosis_list() -> list:
     """Return list of all diagnosis with codes."""
-    return [{"kode": f"D{i+1}", "nama": nama} for i, nama in enumerate(NAMA_DIAGNOSIS)]
+    return [{"kode": f"D{i+1}", "nama": nama} for i, nama in enumerate(get_NAMA_DIAGNOSIS())]
 
 
 if __name__ == "__main__":

@@ -21,11 +21,16 @@ def inject_counts():
 @app.route("/")
 def welcome():
     diagnosis_list = get_diagnosis_list()
-    # Get gejala count for each diagnosis
-    from data import DATA_DIAGNOSIS, DATA_GEJALA
+    # Get gejala for each diagnosis from persistent store
+    from cbr import get_DATA_GEJALA, get_DATA_DIAGNOSIS
+    DATA_GEJALA = get_DATA_GEJALA()
+    DATA_DIAGNOSIS = get_DATA_DIAGNOSIS()
     for d in diagnosis_list:
         idx = int(d["kode"][1:]) - 1
-        d["gejala"] = [DATA_GEJALA[i] for i, v in enumerate(DATA_DIAGNOSIS[idx]) if v == 1]
+        if idx < len(DATA_DIAGNOSIS):
+            d["gejala"] = [DATA_GEJALA[i] for i, v in enumerate(DATA_DIAGNOSIS[idx]) if v == 1]
+        else:
+            d["gejala"] = []
     return render_template("welcome.html", diagnosis_list=diagnosis_list)
 
 
